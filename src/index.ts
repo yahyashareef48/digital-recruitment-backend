@@ -56,7 +56,6 @@ app.get("/get_candidates", (req, res) => {
 
 app.get("/search_candidates", (req, res) => {
   const { location, job_role } = req.query;
-  console.log(location, job_role);
 
   if (location || job_role) {
     let whereClause = "";
@@ -79,6 +78,25 @@ app.get("/search_candidates", (req, res) => {
       }
     });
   } else res.status(404).json("No search query");
+});
+
+app.get("/get_short_list", isLoggedIn, (req, res) => {
+  try {
+    const { candidate_id, user_id } = req.query;
+
+    const updateQuery = `UPDATE candidates SET short_listed_by = array_append(short_listed_by, '${user_id?.toString()}') WHERE candidate_id = ${candidate_id}`;
+    db.query(updateQuery, (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).json("Server error");
+      } else {
+        res.json({ message: "Update successful", rowsAffected: result.rowCount });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Server error");
+  }
 });
 
 app.get("/login", isLoggedIn, (req, res) => {
