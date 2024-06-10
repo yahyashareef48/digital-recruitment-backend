@@ -1,11 +1,11 @@
 import "dotenv/config";
 
 import express from "express";
-import session from "express-session";
 import cors from "cors";
 
 import pg from "pg";
 
+import session from "express-session";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth2";
 
@@ -23,7 +23,12 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 
 const db = new pg.Client({
   host: process.env.DATABASE_HOST,
@@ -38,12 +43,13 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.get("/login", (req, res) => {
+app.get("/login", isLoggedIn, (req, res) => {
   res.json(req.user);
 });
 
 app.get("/logout", (req: any, res: any) => {
   req.logout((err: any) => {
+    console.log("user logout");
     if (err) res.send(err);
     res.send("user logged out");
   });
@@ -54,8 +60,8 @@ app.get("/auth/google", passport.authenticate("google", { scope: ["email", "prof
 app.get(
   "/auth/google/secrets",
   passport.authenticate("google", {
-    successRedirect: "http://localhost:3000/",
-    failureRedirect: "http://localhost:3000/login",
+    successRedirect: process.env.FRONTEND_URL,
+    failureRedirect: process.env.FRONTEND_URL + "/login",
   })
 );
 
@@ -87,5 +93,5 @@ app.listen(port, () => {
 });
 
 function isLoggedIn(req: any, res: any, next: any) {
-  req.user ? next() : res.statusCode(401);
+  req.user ? next() : res.status(401).json("Not authorized");
 }
