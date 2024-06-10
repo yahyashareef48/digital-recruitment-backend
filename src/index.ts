@@ -43,6 +43,17 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+app.get("/get_candidates", (req, res) => {
+  db.query("SELECT * FROM candidates", (err: any, data: any) => {
+    if (err) {
+      console.log(err);
+      res.sendStatus(500);
+    } else {
+      res.json(data.rows);
+    }
+  });
+});
+
 app.get("/login", isLoggedIn, (req, res) => {
   res.json(req.user);
 });
