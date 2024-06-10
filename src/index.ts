@@ -54,6 +54,33 @@ app.get("/get_candidates", (req, res) => {
   });
 });
 
+app.get("/search_candidates", (req, res) => {
+  const { location, job_role } = req.query;
+  console.log(location, job_role);
+
+  if (location || job_role) {
+    let whereClause = "";
+    if (location && job_role) {
+      whereClause = `WHERE LOWER(location) LIKE LOWER('%${location}%') AND LOWER(job_role) LIKE LOWER('%${job_role}%')`;
+    } else if (location) {
+      whereClause = `WHERE LOWER(location) LIKE LOWER('%${location}%')`;
+    } else if (job_role) {
+      whereClause = `WHERE LOWER(job_role) LIKE LOWER('%${job_role}%')`;
+    }
+
+    const sqlQuery = `SELECT * FROM candidates ${whereClause}`;
+
+    db.query(sqlQuery, (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Server error");
+      } else {
+        res.json(result.rows);
+      }
+    });
+  } else res.status(404).json("No search query");
+});
+
 app.get("/login", isLoggedIn, (req, res) => {
   res.json(req.user);
 });
